@@ -1,0 +1,240 @@
+#!/usr/bin/env bash
+
+###
+# venv utility
+#
+# source this in .bashrc
+###
+
+venv() {
+    # define functions in global namespace
+    _venv_help() {
+        echo "Usage:"
+        echo "  venv create [ENVIRONMENT]"
+        echo "  venv remove [ENVIRONMENT]"
+        echo "  venv activate [ENVIRONMENT]"
+        echo "  venv deactivate"
+        echo "  venv list"
+    }
+
+    _venv_error() {
+        _venv_help
+        return 1
+    }
+
+    _venv_create() {
+        local target_env="$1"
+        local target_env_dir="$HOME/.venv/$target_env"
+
+        # Create environment directory
+        mkdir -p "$HOME/.venv"
+
+        if [ -d "$target_env_dir" ]  
+        then
+
+            # environment directory already exists
+            echo "Virtual environment \"$target_env\" already exists"
+            return 1
+
+        else
+            echo "Creating virtual environment..."
+            # create new venv environment
+            python3 -m venv "$target_env_dir" && \
+            echo "Installing wheel, pip, pynvim..."
+            "$target_env_dir/bin/python" -m pip install --upgrade wheel pip pynvim >/dev/null 2>&1
+
+            return "$?"
+        fi
+    }
+
+    _venv_remove() {
+        local target_env="$1"
+        local target_env_dir="$HOME/.venv/$target_env"
+        local current_env_dir="$VIRTUAL_ENV"
+
+        if [ "$current_env_dir" = "$target_env_dir" ]
+        then
+            # deleting current active environment
+
+            _venv_deactivate
+        fi
+
+        if ! [ -d "$target_env_dir" ]
+        then
+            # target environment directory doesn't exist
+            echo "Virtual environment \"$target_env\" not found"
+            return 1
+        fi
+
+        # confirm the deletion 
+        while true
+        do
+            echo -n "Are you sure you want to remove \"$target_env\"? [y/n] "
+            read REPLY
+
+            if [ "$REPLY" = "y" ]
+            then
+                # delete the environment
+                rm -rf "$target_env_dir"
+                return "$?"
+
+            elif [ "$REPLY" = "n" ]
+            then
+                echo "Aborting..."
+                return 1
+            fi
+        done
+
+    }
+
+    _venv_activate() {
+        local target_env="$1"
+        local target_env_dir="$HOME/.venv/$target_env"
+        local target_env_activate="$target_env_dir/bin/activate"
+        local current_env_dir="$VIRTUAL_ENV"
+
+        if [ -n "$current_env_dir" ]
+        then
+            # deactivate already activated environment
+            _venv_deactivate
+        fi
+
+        if ! [ -f "$target_env_activate" ]
+        then
+            # environment doesn't exist yet
+
+            _venv_create "$target_env"
+
+            if [ "$?" = "1" ]
+            then
+                # environment directory already exists
+
+                echo "'$target_env_dir' exists without virtual environment"
+                return 1
+            fi
+
+        fi
+
+        . "$target_env_activate"
+
+        # export variable for children shells
+        export _venv_activated="$target_env_activate"
+    }
+
+    _venv_deactivate() {
+        local current_env_dir="$VIRTUAL_ENV"
+
+        if [ "$current_env_dir" = "" ]
+        then
+            # Environment not activated
+
+            echo "Virtual environment not activated!"
+            return 1
+        fi
+
+        deactivate
+    }
+
+    _venv_list() {
+        find "$HOME/.venv/" -mindepth 1 -maxdepth 1 -type d | sed 's/.*\///' | sort
+    }
+
+
+    # Parse arguments
+    local number_of_args="$#"
+    local command="$1"
+    local environment="$2"
+
+    if [ "$number_of_args" = "0" ]
+    then
+        # no arguments
+
+        command="error"
+
+    elif [ "$number_of_args" = "1" ]
+    then
+        # If a single argument was passed, use current directory name as
+        # environment name (strip all left of the leftmost forwardslash)
+
+        environment="${PWD##*/}"
+
+    elif [ "$number_of_args" = "2" ]
+    then
+        if [ "$environment" = "" ] || \
+                [ "$command" = "list" ] || \
+                [ "$command" = "help" ] || \
+                [ "$command" = "deactivate" ]
+        then
+
+            # "environment" argument must not be an empty string;
+            # commands "list", "help" and "deactivate" must go without further
+            # arguments
+
+            command="error"
+        fi
+
+    else
+        # too many arguments
+
+        command="error"
+    fi
+
+    ###
+    #
+    ###
+
+    # Create .venv directory if it doesn't exist already
+    if ! [ -d "$HOME/.venv" ]
+    then
+        echo '~/.venv/ directory not found - creating...'
+
+        if mkdir "$HOME/.venv" >/dev/null 2>&1
+        then
+            echo "~/.venv/ created successfully."
+        else
+            echo "ERROR: Failed to create directory: ~/.venv/"
+            return 1
+        fi
+    fi
+
+    # Execute command
+    case "$command" in
+        create)
+            _venv_create "$environment"
+            ;;
+        remove)
+            _venv_remove "$environment"
+            ;;
+        activate)
+            _venv_activate "$environment"
+            ;;
+        deactivate)
+            _venv_deactivate
+            ;;
+        list)
+            _venv_list
+            ;;
+        help)
+            _venv_help
+            ;;
+        *)
+            _venv_error
+            ;;
+    esac
+
+    # Save the return value of last executed command into a local variable
+    local return_value="$?"
+
+    # Remove used functions from the global namespace
+    unset _venv_activate
+    unset _venv_create
+    unset _venv_deactivate
+    unset _venv_error
+    unset _venv_help
+    unset _venv_list
+    unset _venv_remove
+
+    # Return the return value
+    return "$return_value"
+}
+###
