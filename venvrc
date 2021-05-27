@@ -10,11 +10,11 @@ venv() {
     # define functions in global namespace
     _venv_help() {
         echo "Usage:"
-        echo "  venv create [ENVIRONMENT]"
-        echo "  venv remove [ENVIRONMENT]"
-        echo "  venv activate [ENVIRONMENT]"
-        echo "  venv deactivate"
-        echo "  venv list"
+        echo "  venv c[reate] [ENVIRONMENT]"
+        echo "  venv r[emove] [ENVIRONMENT]"
+        echo "  venv a[ctivate] [ENVIRONMENT]"
+        echo "  venv d[eactivate]"
+        echo "  venv l[ist]"
     }
 
     _venv_error() {
@@ -139,12 +139,26 @@ venv() {
         find "$HOME/.venv/" -mindepth 1 -maxdepth 1 -type d | sed 's/.*\///' | sort
     }
 
-
-    # Parse arguments
+    # fetch variables
     local number_of_args="$#"
     local command="$1"
     local environment="$2"
 
+    # fill command if prefixed (NOTE: COMMANDS MUST NOT HAVE MUTUAL PREFIX)
+    local full_commands="create remove activate deactivate list help"
+    local full_command
+
+    for full_command in $full_commands
+    do
+        case "$full_command" in
+            "$command"*)
+                command="$full_command"
+                break
+                ;;
+        esac
+    done
+
+    # parse arguments
     if [ "$number_of_args" = "0" ]
     then
         # no arguments
