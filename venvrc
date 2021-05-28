@@ -132,7 +132,7 @@ venv() {
             return 1
         fi
 
-        deactivate
+        deactivate >/dev/null 2>&1
     }
 
     _venv_list() {
@@ -252,3 +252,8 @@ venv() {
     return "$return_value"
 }
 ###
+
+# Activate venv in child shell
+if [ -n "$VIRTUAL_ENV" ]
+then venv activate "${VIRTUAL_ENV##*/}"
+fi
