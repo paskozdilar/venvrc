@@ -118,7 +118,7 @@ venv() {
         . "$target_env_activate"
 
         # export variable for children shells
-        export _venv_activated="$target_env_activate"
+        export _venv_activated="$target_env"
     }
 
     _venv_deactivate() {
@@ -254,6 +254,6 @@ venv() {
 ###
 
 # Activate venv in child shell
-if [ -n "$VIRTUAL_ENV" ]
-then venv activate "${VIRTUAL_ENV##*/}"
+if [ -n "$_venv_activated" ]
+then venv activate "$_venv_activated"
 fi
