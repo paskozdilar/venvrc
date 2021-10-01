@@ -133,6 +133,9 @@ venv() {
         fi
 
         deactivate >/dev/null 2>&1
+
+        # unexport variable for children shells
+        unset _venv_activated
     }
 
     _venv_list() {
