@@ -25,6 +25,7 @@ venv() {
     _venv_create() {
         local target_env="$1"
         local target_env_dir="$HOME/.venv/$target_env"
+        local package
 
         # Create environment directory
         mkdir -p "$HOME/.venv"
@@ -38,10 +39,20 @@ venv() {
 
         else
             echo "Creating virtual environment..."
+
             # create new venv environment
-            python3 -m venv "$target_env_dir" && \
-            echo "Installing wheel, pip, pynvim..."
-            "$target_env_dir/bin/python" -m pip install --upgrade wheel pip pynvim >/dev/null 2>&1
+            python3 -m venv "$target_env_dir"
+
+            # if VENV_INSTALL variable is set, install all packages from it
+            if [ -n "${VENV_INSTALL+x}" ]
+            then
+                echo "Installing packages:"
+                for package in $VENV_INSTALL
+                do
+                    echo " > $package"
+                    "$target_env_dir/bin/python" -m pip install --upgrade ${package} >/dev/null 2>&1
+                done
+            fi
 
             return "$?"
         fi

@@ -1,15 +1,39 @@
 # venvrc
-(Probably) POSIX-compliant shell-based Python-venv convenience wrapper.
+
+Bash-based Python-venv convenience wrapper.
+
+
+## Demo
+
+![](https://github.com/paskozdilar/venvrc/blob/master/venvrc.gif)
+
 
 ## Install
 
-```bash
-# copy venvrc to home
-cp venvrc ~/.venvrc
+Copy `venvrc` file to `~/.venvrc`, and add the following line to your
+`~/.bashrc` file:
 
-# source venvrc on startup
-echo ". ~/.venvrc" >> ~/.bashrc
+```bash
+# source .venvrc on startup
+. ~/.venvrc
 ```
+
+Restart your shell and `venv` will be available as a command.
+
+
+## Configuration
+
+When creating virtual environments, `venvrc` scans for the `VENV_INSTALL`
+environment variable - if it's set, all the packages specified in it, separated
+by whitespace, are installed/upgraded on virtual environment creation.
+
+For example, to upgrade `pip` and `wheel` packages on each venv creation, add
+the following line to your `~/.bashrc`:
+
+```bash
+VENV_INSTALL="pip wheel"
+```
+
 
 ## Usage
 
@@ -24,6 +48,7 @@ environment name
 
 - If `venv activate` is called for an environment that doesn't exist, it will be
 automatically created
+
 
 ### NOTE
 
