@@ -15,6 +15,7 @@ venv() {
         echo "  venv a[ctivate] [ENVIRONMENT]"
         echo "  venv d[eactivate]"
         echo "  venv l[ist]"
+        echo "  venv h[elp]"
     }
 
     _venv_error() {
@@ -30,7 +31,7 @@ venv() {
         # Create environment directory
         mkdir -p "$HOME/.venv"
 
-        if [ -d "$target_env_dir" ]  
+        if [ -d "$target_env_dir" ]
         then
 
             # environment directory already exists
@@ -77,7 +78,7 @@ venv() {
             return 1
         fi
 
-        # confirm the deletion 
+        # confirm the deletion
         while true
         do
             echo -n "Are you sure you want to remove \"$target_env\"? [y/n] "
@@ -265,9 +266,43 @@ venv() {
     # Return the return value
     return "$return_value"
 }
-###
 
 # Activate venv in child shell
 if [ -n "$_venv_activated" ]
 then venv activate "$_venv_activated"
 fi
+
+# Define completion function
+_venv() {
+    case "${#COMP_WORDS[@]}" in
+        2)
+            COMPREPLY=($(
+                compgen \
+                    -W "create remove activate deactivate list help" \
+                    -- "${COMP_WORDS[1]}"
+            ))
+            return
+            ;;
+        3)
+            case "${COMP_WORDS[1]}" in
+                activate) ;;
+                remove) ;;
+                *) return ;;
+            esac
+            if ! [ -d "$HOME/.venv/" ]
+            then return
+            fi
+            COMPREPLY=($(
+                compgen \
+                    -W "$(ls "$HOME/.venv/")" \
+                    -- "${COMP_WORDS[2]}"
+            ))
+            ;;
+        *)
+            return
+            ;;
+    esac
+}
+
+# Add autocomplete
+complete -F _venv venv
